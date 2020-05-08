@@ -8,18 +8,90 @@ output:
 
 ## Loading and preprocessing the data
 
-
+fileUrl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+data <- download.file(fileUrl, "activity.zip")
+data <- unzip("activity.zip")
+activity <- read.csv("activity.csv")
 
 ## What is mean total number of steps taken per day?
 
+# Calculate the total number of steps taken per day #
 
+daySteps<-  aggregate(steps ~ date, activity, sum, na.rm=TRUE)
+
+# Make a histogram of the total number of steps taken per day#
+
+hist(daySteps$steps, col="orange")
+
+#Calculate and report the mean and median of the total number of steps taken per day#
+
+meanDS <- mean(daySteps$steps)
+print(meanDS)
+medianDS <- median(daySteps$steps)
+print(medianDS)
 
 ## What is the average daily activity pattern?
 
+#  plot the 5-minute interval and the average number of steps taken#
+library(ggplot2)
 
+intSteps <- aggregate(steps ~ interval, activity, mean, na.rm=TRUE)
+p <- ggplot(data = intSteps, mapping = aes(x=interval, y=steps))
+p <- p+geom_line(size=1, col="blue")
+print(p)
+
+# Interval contains the maximum number of steps #
+
+intMaxSteps <- intSteps[which.max(intSteps$steps),]
+print(intMaxSteps)
 
 ## Imputing missing values
 
+# Calculate and report the total number of missing values #
 
+missingValues <- length(which(is.na(activity$steps)))
+print(missingValues)
+
+#  filling in all of the missing values #
+
+meanIS <- meanDS/length(unique(activity$interval))
+activity[is.na(activity)] <- meanIS
+
+# Create a new dataset that is equal to the original dataset but with the missing data filled in #
+
+activityNew <- activity
+
+# histogram of the total number of steps taken each day and Calculate and 
+report the mean and median total number of steps taken per day #
+
+dayStepsNew<- aggregate(steps ~ date, activityNew, sum)
+hist(newDaySteps$steps, col="blue")
+meanDSN <- mean(dayStepsNew$steps)
+print(meanDSN)
+medianDSN <- median(dayStepsNew$steps)
+print(medianDSN)
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+#A new factor variable with two levels “weekday” and “weekend” 
+Sys.setlocale("LC_TIME", "en_US")
+activity$date <- as.Date(activity$date)
+
+isweekday<-function(xdate){
+   if (weekdays(xdate) %in% c("Sunday", "Saturday"))
+       return("weekend")
+   else
+       return("weekday")
+}
+activity$weekdays<-mapply(isweekday,activity$date)
+
+# Plot of the interval and the average number of steps taken across weekday days and weekend days #
+
+intStepsWeekdays <- aggregate(steps ~ interval+weekdays, activity, mean)
+p2 <- ggplot(data = intStepsWeekdays, mapping = aes(x=interval, y=steps))
+p2 <- p2+geom_line(size=1, col="blue")
+p2 <- p2+facet_grid(weekdays~.)
+print(p2)
+
+
+
